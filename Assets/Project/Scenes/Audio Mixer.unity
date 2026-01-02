@@ -776,7 +776,7 @@ GameObject:
   - component: {fileID: 463588875}
   - component: {fileID: 463588876}
   m_Layer: 0
-  m_Name: AudioSettings
+  m_Name: AudioHandler
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
