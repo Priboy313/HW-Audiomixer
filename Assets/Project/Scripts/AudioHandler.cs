@@ -5,73 +5,50 @@ public class AudioHandler : MonoBehaviour, IAudioService
 {
 	[SerializeField] private AudioMixer _audioMixer;
 
-	private const string MasterVolume = "MasterVolume";
-	private const string MusicVolume = "MusicVolume";
-	private const string SoundVolume = "SoundVolume";
+	private float _dbCurrent = 0f;
+	private float _dbMute = -80f;
 
-	private float _volumeCurrent = 1f;
-	private float _volumeMute = -80f;
-
-	public void SetMasterVolume(float volume)
+	public void SetVolume(AudioGroup group, float volume)
 	{
-		SetMixerParam(MasterVolume, volume);
+		string param = GetParamName(group);
+
+		float db = volume <= 0.001f ? _dbMute : Mathf.Log10(volume) * 20;
+		_audioMixer.SetFloat(param, db);
 	}
 
-	public void SetMusicVolume(float volume)
+	public float GetVolume(AudioGroup group)
 	{
-		SetMixerParam(MusicVolume, volume);
-	}
+		string param = GetParamName(group);
 
-	public void SetSoundVolume(float volume)
-	{
-		SetMixerParam(SoundVolume, volume);
-	}
+		if (_audioMixer.GetFloat(param, out float db))
+		{
+			return Mathf.Pow(10, db / 20);
+		}
 
+		return _dbCurrent;
+	}
+	
 	public void SetMute(bool enabled)
 	{
 		if (enabled)
 		{
-			_volumeCurrent = GetMixerParam(MasterVolume);
-			SetMasterVolume(_volumeMute);
+			_dbCurrent = GetVolume(AudioGroup.Master);
+			SetVolume(AudioGroup.Master, _dbMute);
 		}
 		else
 		{
-			SetMasterVolume(_volumeCurrent);
+			SetVolume(AudioGroup.Master, _dbCurrent);
 		}
 	}
 
-	public float GetMasterVolume()
+	private string GetParamName(AudioGroup group)
 	{
-		return GetMixerParam(MasterVolume);
-	}
-
-	public float GetMusicVolume()
-	{
-		return GetMixerParam(MusicVolume);
-	}
-
-	public float GetSoundVolume()
-	{
-		return GetMixerParam(SoundVolume);
-	}
-
-	public bool IsMuted()
-	{
-		return GetMixerParam(MasterVolume) > _volumeMute;
-	}
-
-	private void SetMixerParam(string name, float volume)
-	{
-		// from [0, 1] float volume to mixer db
-		float db = volume <= 0.001f ? _volumeMute : Mathf.Log10(volume) * 20;
-		_audioMixer.SetFloat(name, db);
-	}
-
-	private float GetMixerParam(string name)
-	{
-		_audioMixer.GetFloat(name, out float db);
-		
-		// from  mixer db to [0, 1] float
-		return Mathf.Pow(10, db / 20);
+		return group switch
+		{
+			AudioGroup.Master => "Master",
+			AudioGroup.Music => "Music",
+			AudioGroup.Sound => "Sound",
+			_ => "Master"
+		};
 	}
 }

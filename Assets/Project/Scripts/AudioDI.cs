@@ -9,4 +9,9 @@ public class AudioDI : MonoBehaviour
 	{
 		_audioSettingsMenu.Init(_audioHandler);
 	}
+
+	private void OnDisable()
+	{
+		_audioSettingsMenu.Dispose();
+	}
 }

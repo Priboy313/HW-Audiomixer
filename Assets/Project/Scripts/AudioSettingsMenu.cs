@@ -1,7 +1,8 @@
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class AudioSettingsMenu : MonoBehaviour
+public class AudioSettingsMenu : MonoBehaviour, IDisposable
 {
 	[SerializeField] private Slider _sliderMaster;
 	[SerializeField] private Slider _sliderMusic;
@@ -14,40 +15,41 @@ public class AudioSettingsMenu : MonoBehaviour
 	{
 		_audioService = audioService;
 
-		_sliderMaster.value = _audioService.GetMasterVolume();
-		_sliderMusic.value = _audioService.GetMusicVolume();
-		_sliderSound.value = _audioService.GetSoundVolume();
-
-		_sliderMaster.onValueChanged.RemoveAllListeners();
-		_sliderMaster.onValueChanged.AddListener(OnMasterChanged);
-
-		_sliderMusic.onValueChanged.RemoveAllListeners();
-		_sliderMusic.onValueChanged.AddListener(OnMusicChanged);
-
-		_sliderSound.onValueChanged.RemoveAllListeners();
-		_sliderSound.onValueChanged.AddListener(OnSoundChanged);
+		InitSlider(_sliderMaster, AudioGroup.Master);
+		InitSlider(_sliderMusic, AudioGroup.Music);
+		InitSlider(_sliderSound, AudioGroup.Sound);
 
 		_toggleMute.onValueChanged.RemoveAllListeners();
 		_toggleMute.onValueChanged.AddListener(OnMuteChanged);
 	}
 
-	private void OnMasterChanged(float value)
+	private void InitSlider(Slider slider, AudioGroup group)
 	{
-		_audioService.SetMasterVolume(value);
+		slider.value = _audioService.GetVolume(group);
+
+		slider.onValueChanged.RemoveAllListeners();
+
+		slider.onValueChanged.AddListener((volume) =>
+		{
+			_audioService.SetVolume(group, volume);
+		});
 	}
 
-	private void OnMusicChanged(float value)
+	public void Dispose()
 	{
-		_audioService.SetMusicVolume(value);
-	}
-
-	private void OnSoundChanged(float value)
-	{
-		_audioService.SetSoundVolume(value);
+		_sliderMaster.onValueChanged.RemoveAllListeners();
+		_sliderMusic.onValueChanged.RemoveAllListeners();
+		_sliderSound.onValueChanged.RemoveAllListeners();
+		_toggleMute.onValueChanged.RemoveAllListeners();
 	}
 
 	private void OnMuteChanged(bool enabled)
 	{
 		_audioService.SetMute(enabled);
+	}
+
+	private void OnDestroy()
+	{
+		Dispose();
 	}
 }
